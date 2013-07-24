@@ -24,10 +24,13 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.MapsInitializer;
+import com.google.android.gms.maps.SupportMapFragment;
 
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
@@ -50,6 +53,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Color;
+import android.support.v4.app.FragmentActivity;
 import android.text.TextPaint;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -64,7 +68,7 @@ import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
 //import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity {
 	
 	private GoogleMap mMap;
 	private MapView mmMap;
@@ -88,10 +92,17 @@ public class MainActivity extends Activity {
 		
 		setTitle("Infections in Countries");
 		mapItems =  new ArrayList<HashMap<String, String>>();
-			
-		getXMLFile(SERVER_URL, this);
-		setUpMap();
 		
+		if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) != 0)
+		{
+			Toast.makeText(this, "Error setting up the map, Exiting ...", Toast.LENGTH_LONG).show();
+			this.finish();
+			return;
+		}
+		
+		setUpMap();	
+		getXMLFile(SERVER_URL, this);
+
 		mlocManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
 		//mapController = mmMap.getController();
 		 
@@ -221,7 +232,9 @@ public class MainActivity extends Activity {
 	
 	private void setUpMap() {
 		
-		mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.MapView)).getMap();
+        mMap = ((SupportMapFragment)  getSupportFragmentManager().findFragmentById(R.id.MapView))
+                .getMap();
+		//mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.MapView)).getMap();
 		//mmMap = (MapView)findViewById(R.id.MapView);
 	    if (mMap != null) {
 
@@ -248,14 +261,15 @@ public class MainActivity extends Activity {
                      pd.setMessage("Please Wait While Collecting Data");
                      pd.setCancelable(false);
                      pd.setIndeterminate(true);
-                     pd.show();
+                     
+                     //pd.show();
             }
             
             @Override
             protected Void doInBackground(Void... arg0) {
             	
 
-            	 
+            	
             	
             	String xml = getXmlFromUrl(url); // getting XML
             	
@@ -427,7 +441,13 @@ public class MainActivity extends Activity {
             @Override
             protected void onPostExecute(Void result) {
             	updateMapWithPins();
-            	pd.dismiss();
+            	
+                //if (pd != null) {
+                //	pd.dismiss();
+                //	pd = null;
+                //}
+                
+
             	
             }
              
